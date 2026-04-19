@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { saveGoals, logout } from "@/app/actions";
+import { saveGoals, logout, toggleIntakeDescription } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
 interface Profile {
@@ -22,12 +22,15 @@ const macroFields = [
 interface AccountClientProps {
   email: string;
   profile: Profile;
+  showIntakeDescription: boolean;
 }
 
-export default function AccountClient({ email, profile }: AccountClientProps) {
+export default function AccountClient({ email, profile, showIntakeDescription }: AccountClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [descEnabled, setDescEnabled] = useState(showIntakeDescription);
+  const [descToggling, setDescToggling] = useState(false);
   const router = useRouter();
 
   async function handleSaveGoals(e: React.FormEvent<HTMLFormElement>) {
@@ -46,6 +49,13 @@ export default function AccountClient({ email, profile }: AccountClientProps) {
       setLoading(false);
       router.refresh();
     }
+  }
+
+  async function handleToggleDescription(value: boolean) {
+    setDescToggling(true);
+    setDescEnabled(value);
+    await toggleIntakeDescription(value);
+    setDescToggling(false);
   }
 
   return (
@@ -110,6 +120,30 @@ export default function AccountClient({ email, profile }: AccountClientProps) {
         </motion.button>
       </form>
 
+      {/* Logging settings */}
+      <h2 className="mt-8 mb-4 text-lg font-semibold">Logging</h2>
+      <div className="rounded-2xl border border-card-border bg-card p-4 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium">Entry notes</p>
+          <p className="text-xs text-muted mt-0.5">Show a note field when logging</p>
+        </div>
+        <button
+          role="switch"
+          aria-checked={descEnabled}
+          disabled={descToggling}
+          onClick={() => handleToggleDescription(!descEnabled)}
+          className={`relative h-6 w-11 rounded-full transition-colors duration-200 disabled:opacity-50 ${
+            descEnabled ? "bg-protein" : "bg-card-border"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+              descEnabled ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+
       <form action={logout} className="mt-8">
         <motion.button
           type="submit"
@@ -122,3 +156,4 @@ export default function AccountClient({ email, profile }: AccountClientProps) {
     </div>
   );
 }
+

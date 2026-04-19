@@ -9,7 +9,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("calories_goal, protein_goal, carb_goal, fat_goal")
+    .select("calories_goal, protein_goal, carb_goal, fat_goal, show_intake_description")
     .eq("id", user!.id)
     .single();
 
@@ -24,6 +24,7 @@ export default async function AccountPage() {
           fat_goal: null,
         }
       }
+      showIntakeDescription={profile?.show_intake_description ?? false}
     />
   );
 }

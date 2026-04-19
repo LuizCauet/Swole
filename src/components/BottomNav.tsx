@@ -6,25 +6,6 @@ import { motion } from "framer-motion";
 
 const tabs = [
   {
-    href: "/home",
-    label: "Home",
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
-      </svg>
-    ),
-  },
-  {
     href: "/history",
     label: "History",
     icon: (
@@ -40,6 +21,25 @@ const tabs = [
       >
         <path d="M3 3v18h18" />
         <path d="M7 16l4-8 4 4 4-6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/home",
+    label: "Home",
+    icon: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
       </svg>
     ),
   },

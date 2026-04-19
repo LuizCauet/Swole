@@ -10,11 +10,13 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Swole",
   description: "Daily macro tracker",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Swole",
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
@@ -33,14 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full`}>
-      <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/icons/icon-192.png"
-        />
-      </head>
+      <head />
       <body className="h-full bg-background text-foreground antialiased">
         {children}
         <script

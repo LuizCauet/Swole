@@ -15,7 +15,8 @@ interface LogSheetProps {
   open: boolean;
   onClose: () => void;
   fields: MacroField[];
-  onSubmit: (values: Record<string, number>) => Promise<void>;
+  onSubmit: (values: Record<string, number>, description?: string) => Promise<void>;
+  showDescription?: boolean;
 }
 
 export default function LogSheet({
@@ -23,8 +24,10 @@ export default function LogSheet({
   onClose,
   fields,
   onSubmit,
+  showDescription = false,
 }: LogSheetProps) {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(key: string, value: string) {
@@ -38,9 +41,10 @@ export default function LogSheet({
       const v = parseInt(values[field.key] || "0");
       if (v > 0) numericValues[field.key] = v;
     }
-    await onSubmit(numericValues);
+    await onSubmit(numericValues, description.trim() || undefined);
     triggerHaptic("success");
     setValues({});
+    setDescription("");
     setLoading(false);
     onClose();
   }
@@ -96,6 +100,15 @@ export default function LogSheet({
                   </div>
                 </div>
               ))}
+              {showDescription && (
+                <input
+                  type="text"
+                  placeholder="Note (optional)"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="h-12 w-full rounded-xl border border-card-border bg-background px-4 text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-protein/50"
+                />
+              )}
             </div>
 
             <motion.button

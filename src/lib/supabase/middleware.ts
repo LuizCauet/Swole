@@ -47,18 +47,31 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Check onboarding status for authenticated users on app routes
+  // Check onboarding status for authenticated users on app routes.
+  // Use a cookie to avoid a DB round-trip on every navigation.
   if (user && !isPublicRoute && path !== "/onboarding") {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("onboarding_complete")
-      .eq("id", user.id)
-      .single();
+    const onboarded = request.cookies.get("onboarding_complete")?.value;
+    if (onboarded !== "1") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_complete")
+        .eq("id", user.id)
+        .single();
 
-    if (profile && !profile.onboarding_complete) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
-      return NextResponse.redirect(url);
+      if (profile && !profile.onboarding_complete) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding";
+        return NextResponse.redirect(url);
+      }
+
+      // User has completed onboarding — set cookie so we skip this check next time
+      supabaseResponse.cookies.set("onboarding_complete", "1", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 365, // 1 year
+      });
     }
   }
 

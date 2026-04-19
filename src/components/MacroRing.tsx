@@ -69,12 +69,12 @@ export default function MacroRing({
             initial={{ scale: 1.2, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="text-xl font-bold tabular-nums"
+            className={`text-xl font-bold tabular-nums ${current > goal ? "text-yellow-400" : ""}`}
           >
-            {current}
+            {current > goal ? current - goal : goal - current}
           </motion.span>
           <span className="text-[10px] text-muted">
-            / {goal} {unit}
+            {unit} {current > goal ? "over" : "left"}
           </span>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { updateDayLog } from "@/app/actions";
+import IntakeEventItem, { type IntakeEvent } from "./IntakeEventItem";
 
 interface MacroConfig {
   key: string;
@@ -16,6 +16,8 @@ interface DayCardProps {
   displayDate: string;
   macros: Record<string, number>;
   enabledMacros: MacroConfig[];
+  events: IntakeEvent[];
+  showDescription: boolean;
   onUpdated: () => void;
 }
 
@@ -24,104 +26,79 @@ export default function DayCard({
   displayDate,
   macros,
   enabledMacros,
+  events,
+  showDescription,
   onUpdated,
 }: DayCardProps) {
-  const [editing, setEditing] = useState(false);
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-
-  function startEdit() {
-    const initial: Record<string, string> = {};
-    enabledMacros.forEach((m) => {
-      initial[m.key] = String(macros[m.key] ?? 0);
-    });
-    setValues(initial);
-    setEditing(true);
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    await updateDayLog({
-      trackingDate: date,
-      calories: parseInt(values.calories || "0"),
-      protein: parseInt(values.protein || "0"),
-      carbs: parseInt(values.carbs || "0"),
-      fat: parseInt(values.fat || "0"),
-    });
-    setSaving(false);
-    setEditing(false);
-    onUpdated();
-  }
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <motion.div
-      layout
-      className="rounded-2xl border border-card-border bg-card p-4"
-    >
-      <div className="flex items-center justify-between mb-3">
+    <motion.div layout className="rounded-2xl border border-card-border bg-card overflow-hidden">
+      {/* Summary row — tap to expand */}
+      <button
+        className="w-full px-4 py-3 flex items-center justify-between text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
         <span className="text-sm font-medium">{displayDate}</span>
-        <button
-          onClick={editing ? handleSave : startEdit}
-          disabled={saving}
-          className="text-xs text-protein font-medium disabled:opacity-50"
-        >
-          {saving ? "Saving..." : editing ? "Save" : "Edit"}
-        </button>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {editing ? (
-          <motion.div
-            key="edit"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col gap-2"
-          >
+        <div className="flex items-center gap-3">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 justify-end">
             {enabledMacros.map((m) => (
-              <div key={m.key} className="flex items-center gap-2">
+              <div key={m.key} className="flex items-center gap-1">
                 <div
-                  className="h-2 w-2 rounded-full shrink-0"
+                  className="h-1.5 w-1.5 rounded-full"
                   style={{ backgroundColor: m.color }}
                 />
-                <span className="text-xs text-muted w-16">{m.label}</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  value={values[m.key] || ""}
-                  onChange={(e) =>
-                    setValues((prev) => ({ ...prev, [m.key]: e.target.value }))
-                  }
-                  className="h-8 flex-1 rounded-lg border border-card-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-protein/50"
-                />
-                <span className="text-[10px] text-muted w-6">{m.unit}</span>
-              </div>
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="display"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-wrap gap-x-4 gap-y-1"
-          >
-            {enabledMacros.map((m) => (
-              <div key={m.key} className="flex items-center gap-1.5">
-                <div
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: m.color }}
-                />
-                <span className="text-xs text-muted">{m.label}</span>
-                <span className="text-xs font-medium tabular-nums">
-                  {macros[m.key] ?? 0}
-                  {m.unit}
+                <span className="text-xs tabular-nums text-muted">
+                  {macros[m.key] ?? 0}{m.unit}
                 </span>
               </div>
             ))}
+          </div>
+          <svg
+            className={`w-4 h-4 text-muted transition-transform duration-200 shrink-0 ${expanded ? "rotate-180" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Events list */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="events"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-2 border-t border-card-border flex flex-col gap-2">
+              {events.length > 0 ? (
+                events.map((event) => (
+                  <IntakeEventItem
+                    key={event.id}
+                    event={event}
+                    trackingDate={date}
+                    enabledMacros={enabledMacros}
+                    showDescription={showDescription}
+                    onUpdated={onUpdated}
+                  />
+                ))
+              ) : (
+                <p className="text-xs text-muted text-center py-2">
+                  No individual entries recorded
+                </p>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
   );
 }
+

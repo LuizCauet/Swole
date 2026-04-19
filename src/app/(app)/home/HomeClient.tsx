@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 import MacroRing from "@/components/MacroRing";
 import LogSheet from "@/components/LogSheet";
+import IntakeEventItem, { type IntakeEvent } from "@/components/IntakeEventItem";
 import { logMacros } from "@/app/actions";
 import { triggerHaptic } from "@/lib/haptics";
 import { useRouter } from "next/navigation";
@@ -57,12 +58,16 @@ interface HomeClientProps {
   profile: Profile;
   log: Log;
   trackingDate: string;
+  intakeEvents: IntakeEvent[];
+  showIntakeDescription: boolean;
 }
 
 export default function HomeClient({
   profile,
   log,
   trackingDate,
+  intakeEvents,
+  showIntakeDescription,
 }: HomeClientProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [, startTransition] = useTransition();
@@ -79,19 +84,22 @@ export default function HomeClient({
     unit: m.unit,
   }));
 
-  async function handleLog(values: Record<string, number>) {
+  function refresh() {
+    startTransition(() => router.refresh());
+  }
+
+  async function handleLog(values: Record<string, number>, description?: string) {
     await logMacros({
       ...values,
+      description,
       trackingDate,
-    } as { calories?: number; protein?: number; carbs?: number; fat?: number; trackingDate: string });
+    } as { calories?: number; protein?: number; carbs?: number; fat?: number; description?: string; trackingDate: string });
 
-    startTransition(() => {
-      router.refresh();
-    });
+    refresh();
   }
 
   return (
-    <div className="flex flex-col items-center px-6 pt-12">
+    <div className="flex flex-col items-center px-6 pt-12 pb-8">
       <motion.h1
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -109,9 +117,9 @@ export default function HomeClient({
         {enabledMacros.map((macro, i) => (
           <motion.div
             key={macro.key}
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.1, duration: 0.4 }}
+            transition={{ delay: i * 0.04, duration: 0.25 }}
           >
             <MacroRing
               label={macro.label}
@@ -143,11 +151,33 @@ export default function HomeClient({
         </motion.button>
       )}
 
+      {/* Today's entries */}
+      {intakeEvents.length > 0 && (
+        <div className="w-full max-w-xs mt-8">
+          <h2 className="text-sm font-medium text-muted mb-3">
+            Today&apos;s Entries
+          </h2>
+          <div className="flex flex-col gap-2">
+            {intakeEvents.map((event) => (
+              <IntakeEventItem
+                key={event.id}
+                event={event}
+                trackingDate={trackingDate}
+                enabledMacros={logFields}
+                showDescription={showIntakeDescription}
+                onUpdated={refresh}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <LogSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         fields={logFields}
         onSubmit={handleLog}
+        showDescription={showIntakeDescription}
       />
     </div>
   );
@@ -161,3 +191,4 @@ function formatDate(dateStr: string): string {
     day: "numeric",
   });
 }
+
